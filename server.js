@@ -5,16 +5,15 @@ const path = require("path");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// middlewares
 app.use(cors());
 app.use(express.json());
 
-// 👇 هذا مهم جداً
-app.use(express.static(__dirname));
+// 👇 مهم جداً: نخدم مجلد public
+app.use(express.static(path.join(__dirname, "public")));
 
 // الصفحة الرئيسية
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 // API الطلبات
@@ -28,5 +27,5 @@ app.post("/api/orders", (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
