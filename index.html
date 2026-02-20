@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لحظات نت | Centered Luxury</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+
+<style>
+:root{
+--gold:#d4af37;
+--bg:#0b0b0b;
+--card:#111;
+--soft:#1a1a1a;
+--text:#ffffff;
+}
+
+*{box-sizing:border-box}
+
+body{
+margin:0;
+font-family:'Inter',sans-serif;
+background:radial-gradient(circle at top,#111,#000 70%);
+color:var(--text);
+display:flex;
+justify-content:center;
+align-items:center;
+min-height:100vh;
+padding:20px;
+}
+
+/* نجوم خفيفة */
+body::before{
+content:"";
+position:fixed;
+inset:0;
+background-image:radial-gradient(var(--gold) 1px, transparent 1px);
+background-size:70px 70px;
+opacity:.05;
+animation:stars 100s linear infinite;
+z-index:-1;
+}
+@keyframes stars{
+from{transform:translateY(0);}
+to{transform:translateY(-500px);}
+}
+
+.container{
+width:100%;
+max-width:620px;
+background:var(--card);
+padding:35px;
+border-radius:22px;
+border:1px solid #222;
+box-shadow:
+0 0 20px rgba(212,175,55,.15),
+0 0 60px rgba(212,175,55,.1);
+}
+
+.logo{
+text-align:center;
+margin-bottom:25px;
+}
+
+.logo img{
+width:170px;
+}
+
+h2{
+margin:0 0 25px 0;
+font-weight:800;
+text-align:center;
+}
+
+input{
+width:100%;
+padding:12px;
+margin-bottom:10px;
+border-radius:10px;
+border:1px solid #333;
+background:var(--soft);
+color:white;
+}
+
+.error{
+color:#ff4d4d;
+font-size:13px;
+margin-top:-8px;
+margin-bottom:8px;
+}
+
+.cards{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:12px;
+margin-top:15px;
+}
+
+.card{
+background:var(--soft);
+padding:16px;
+border-radius:14px;
+border:1px solid #222;
+transition:.3s;
+display:flex;
+flex-direction:column;
+justify-content:space-between;
+}
+
+.card:hover{
+border-color:var(--gold);
+transform:translateY(-3px);
+box-shadow:0 10px 25px rgba(212,175,55,.15);
+}
+
+.card-title{
+font-weight:600;
+margin-bottom:5px;
+}
+
+.card-price{
+color:var(--gold);
+font-weight:600;
+margin-bottom:10px;
+}
+
+.counter{
+display:flex;
+align-items:center;
+justify-content:center;
+gap:10px;
+}
+
+.counter button{
+width:30px;
+height:30px;
+border-radius:50%;
+border:none;
+background:var(--gold);
+color:black;
+font-weight:bold;
+cursor:pointer;
+}
+
+.counter span{
+min-width:20px;
+text-align:center;
+font-weight:600;
+}
+
+.total{
+margin-top:20px;
+text-align:center;
+font-size:20px;
+font-weight:600;
+}
+
+.total span{
+color:var(--gold);
+}
+
+.send-btn{
+margin-top:20px;
+width:100%;
+padding:12px;
+border:none;
+border-radius:10px;
+background:linear-gradient(45deg,var(--gold),#b8860b);
+font-weight:600;
+cursor:pointer;
+}
+
+.toast{
+position:fixed;
+top:25px;
+right:25px;
+background:#111;
+border:1px solid var(--gold);
+padding:15px 20px;
+border-radius:10px;
+display:none;
+box-shadow:0 10px 25px rgba(212,175,55,.3);
+}
+@media(max-width:600px){
+.cards{grid-template-columns:1fr;}
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="logo">
+<img src="https://i.postimg.cc/mRmHdr1j/file-00000000d5d871f79cf9218e3141d570.png">
+</div>
+
+<h2>طلب الكروت</h2>
+
+<input id="business" placeholder="اسم النشاط التجاري">
+<div id="businessError" class="error"></div>
+
+<input id="name" placeholder="اسم العميل">
+<div id="nameError" class="error"></div>
+
+<input id="phone" placeholder="رقم الهاتف">
+<div id="phoneError" class="error"></div>
+
+<div class="cards">
+
+<div class="card" data-price="12000">
+<div>
+<div class="card-title">200 صفحة</div>
+<div class="card-price">12,000 ريال</div>
+</div>
+<div class="counter">
+<button onclick="changeQty(this,-1)">−</button>
+<span class="qty">0</span>
+<button onclick="changeQty(this,1)">+</button>
+</div>
+</div>
+
+<div class="card" data-price="30000">
+<div>
+<div class="card-title">500 صفحة</div>
+<div class="card-price">30,000 ريال</div>
+</div>
+<div class="counter">
+<button onclick="changeQty(this,-1)">−</button>
+<span class="qty">0</span>
+<button onclick="changeQty(this,1)">+</button>
+</div>
+</div>
+
+<div class="card" data-price="60000">
+<div>
+<div class="card-title">1000 صفحة</div>
+<div class="card-price">60,000 ريال</div>
+</div>
+<div class="counter">
+<button onclick="changeQty(this,-1)">−</button>
+<span class="qty">0</span>
+<button onclick="changeQty(this,1)">+</button>
+</div>
+</div>
+
+<div class="card" data-price="180000">
+<div>
+<div class="card-title">3000 صفحة</div>
+<div class="card-price">180,000 ريال</div>
+</div>
+<div class="counter">
+<button onclick="changeQty(this,-1)">−</button>
+<span class="qty">0</span>
+<button onclick="changeQty(this,1)">+</button>
+</div>
+</div>
+
+</div>
+
+<div class="total">
+الإجمالي: <span id="total">0</span> ريال
+</div>
+
+<button class="send-btn" onclick="sendOrder()">تأكيد الطلب</button>
+
+</div>
+
+<div id="toast" class="toast">
+تم إرسال الطلب بنجاح 👑
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+apiKey:"AIzaSyCtTfgi_68V-3GgvLjtUvFdh7kC3wWZEhI",
+authDomain:"lahazat-orders-f5026.firebaseapp.com",
+projectId:"lahazat-orders-f5026",
+storageBucket:"lahazat-orders-f5026.appspot.com",
+messagingSenderId:"693786330822",
+appId:"1:693786330822:web:a7d4fbfdb47cce896ef9c7"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+function updateTotal(){
+let total=0;
+document.querySelectorAll(".card").forEach(card=>{
+const qty=parseInt(card.querySelector(".qty").innerText);
+const price=parseInt(card.dataset.price);
+total+=qty*price;
+});
+document.getElementById("total").innerText=total;
+}
+
+window.changeQty=function(btn,change){
+const card=btn.closest(".card");
+const span=card.querySelector(".qty");
+let qty=parseInt(span.innerText);
+qty+=change;
+if(qty<0) qty=0;
+span.innerText=qty;
+updateTotal();
+}
+
+window.sendOrder=async function(){
+
+const business=document.getElementById("business").value.trim();
+const name=document.getElementById("name").value.trim();
+const phone=document.getElementById("phone").value.trim();
+
+document.getElementById("businessError").innerText="";
+document.getElementById("nameError").innerText="";
+document.getElementById("phoneError").innerText="";
+
+let valid=true;
+
+if(!business){document.getElementById("businessError").innerText="ادخل اسم النشاط";valid=false;}
+if(!name){document.getElementById("nameError").innerText="ادخل اسم العميل";valid=false;}
+
+const phoneRegex=/^(77|78|71|73|70)\d{7}$/;
+if(!phoneRegex.test(phone)){
+document.getElementById("phoneError").innerText="رقم غير صحيح";
+valid=false;
+}
+
+let items=[];
+document.querySelectorAll(".card").forEach(card=>{
+const qty=parseInt(card.querySelector(".qty").innerText);
+if(qty>0){
+items.push({price:parseInt(card.dataset.price),quantity:qty});
+}
+});
+
+if(items.length===0 || !valid) return;
+
+await addDoc(collection(db,"orders"),{
+business,name,phone,
+items,
+total:parseInt(document.getElementById("total").innerText),
+createdAt:serverTimestamp(),
+status:"قيد الانتظار"
+});
+
+document.getElementById("toast").style.display="block";
+setTimeout(()=>{document.getElementById("toast").style.display="none";},3000);
+}
+</script>
+
+</body>
+</html>

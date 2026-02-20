@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lahazat Enterprise Panel</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+body{
+margin:0;
+font-family:'Segoe UI',sans-serif;
+background:linear-gradient(135deg,#0d1117,#111827);
+color:#fff;
+transition:.3s;
+}
+
+.light-mode{
+background:#f3f4f6;
+color:#111;
+}
+
+.light-mode .header,
+.light-mode .card,
+.light-mode .table-container,
+.light-mode .modal-content{
+background:#fff;
+color:#111;
+}
+
+.login-box{
+max-width:420px;
+margin:120px auto;
+background:#161b22;
+padding:35px;
+border-radius:15px;
+text-align:center;
+}
+
+.login-box input,.login-box button{
+width:100%;
+padding:12px;
+margin-top:12px;
+border:none;
+border-radius:8px;
+}
+
+.login-box button{background:#2ea043;color:white}
+
+.header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:20px;
+background:#161b22;
+}
+
+.logout-btn{
+background:#da3633;
+border:none;
+padding:8px 15px;
+border-radius:6px;
+color:white;
+cursor:pointer;
+margin-left:5px;
+}
+
+.stats{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+gap:15px;
+padding:20px;
+}
+
+.card{
+background:#1f2937;
+padding:20px;
+border-radius:12px;
+text-align:center;
+}
+
+.filters{
+display:flex;
+gap:10px;
+padding:0 20px 20px;
+flex-wrap:wrap;
+}
+
+.filters input,.filters select{
+padding:10px;
+border-radius:6px;
+border:none;
+}
+
+.table-container{
+background:#1f2937;
+margin:0 20px 30px;
+border-radius:12px;
+overflow:auto;
+}
+
+table{width:100%;border-collapse:collapse}
+th,td{padding:12px;text-align:center}
+th{background:#111827}
+tr{border-bottom:1px solid #374151}
+
+.status{padding:4px 10px;border-radius:6px;font-size:12px}
+.pending{background:orange}
+.approved{background:#2ea043}
+.rejected{background:#da3633}
+
+.btn{
+border:none;
+padding:6px 10px;
+border-radius:6px;
+cursor:pointer;
+margin:2px;
+font-size:12px;
+}
+
+.green{background:#2ea043;color:white}
+.red{background:#da3633;color:white}
+.gray{background:#6b7280;color:white}
+.whatsapp{background:#25D366;color:white}
+.details{background:#2563eb;color:white}
+
+.hidden{display:none}
+
+.modal{
+position:fixed;
+top:0;left:0;
+width:100%;height:100%;
+background:rgba(0,0,0,.8);
+display:none;
+justify-content:center;
+align-items:center;
+z-index:9999;
+}
+
+.modal-content{
+background:#1f2937;
+padding:25px;
+border-radius:12px;
+width:95%;
+max-width:500px;
+}
+</style>
+</head>
+<body>
+
+<div class="login-box" id="loginBox">
+<h2>🔐 تسجيل دخول الإدارة</h2>
+<input type="email" id="email" placeholder="البريد الإلكتروني">
+<input type="password" id="password" placeholder="كلمة المرور">
+<button onclick="login()">دخول</button>
+<p id="errorMsg" style="color:red"></p>
+</div>
+
+<div id="adminPanel" class="hidden">
+
+<div class="header">
+<h2>🚀 Lahazat Enterprise Panel</h2>
+<div>
+<button class="logout-btn" onclick="toggleTheme()">🌙 / ☀</button>
+<button class="logout-btn" onclick="logout()">تسجيل خروج</button>
+</div>
+</div>
+
+<div class="stats">
+<div class="card"><p>جميع الطلبات</p><h3 id="total">0</h3></div>
+<div class="card"><p>قيد الانتظار</p><h3 id="pending">0</h3></div>
+<div class="card"><p>تم التنفيذ</p><h3 id="approved">0</h3></div>
+<div class="card"><p>مرفوض</p><h3 id="rejected">0</h3></div>
+</div>
+
+<div class="filters">
+<input type="text" id="searchInput" placeholder="بحث بالاسم أو الهاتف">
+<select id="statusFilter">
+<option value="">كل الحالات</option>
+<option value="قيد الانتظار">قيد الانتظار</option>
+<option value="تم التنفيذ">تم التنفيذ</option>
+<option value="مرفوض">مرفوض</option>
+</select>
+</div>
+
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>الاسم</th>
+<th>الهاتف</th>
+<th>الفئة</th>
+<th>السعر</th>
+<th>التاريخ</th>
+<th>الحالة</th>
+<th>إجراءات</th>
+</tr>
+</thead>
+<tbody id="ordersTable"></tbody>
+</table>
+</div>
+
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, onSnapshot, updateDoc, deleteDoc, doc, query, orderBy, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCtTfgi_68V-3GgvLjtUvFdh7kC3wWZEhI",
+  authDomain: "lahazat-orders-f5026.firebaseapp.com",
+  projectId: "lahazat-orders-f5026",
+  storageBucket: "lahazat-orders-f5026.appspot.com",
+  messagingSenderId: "693786330822",
+  appId: "1:693786330822:web:a7d4fbfdb47cce896ef9c7"
+};
+
+const app=initializeApp(firebaseConfig);
+const db=getFirestore(app);
+const auth=getAuth(app);
+
+if("Notification" in window){Notification.requestPermission();}
+
+let firstLoad=true;
+let lastCount=0;
+
+window.login=async()=>{
+try{await signInWithEmailAndPassword(auth,email.value,password.value)}
+catch{errorMsg.innerText="بيانات غير صحيحة"}
+}
+
+window.logout=()=>signOut(auth);
+window.toggleTheme=()=>document.body.classList.toggle("light-mode");
+
+onAuthStateChanged(auth,user=>{
+if(user){loginBox.classList.add("hidden");adminPanel.classList.remove("hidden");loadOrders();}
+else{loginBox.classList.remove("hidden");adminPanel.classList.add("hidden");}
+});
+
+function loadOrders(){
+onSnapshot(query(collection(db,"orders"),orderBy("createdAt","desc")),snapshot=>{
+
+if(!firstLoad && snapshot.size>lastCount){
+new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg").play();
+if(Notification.permission==="granted"){new Notification("طلب جديد وصل 🔔");}
+}
+firstLoad=false;
+lastCount=snapshot.size;
+
+allOrders=[];
+snapshot.forEach(docSnap=>{
+allOrders.push({...docSnap.data(),id:docSnap.id});
+});
+renderTable();
+});
+}
+
+let allOrders=[];
+
+function renderTable(){
+const table=document.getElementById("ordersTable");
+table.innerHTML="";
+
+let total=0,pending=0,approved=0,rejected=0;
+
+const search=searchInput.value.toLowerCase();
+const status=statusFilter.value;
+
+allOrders.forEach(o=>{
+total++;
+if(o.status==="تم التنفيذ") approved++;
+else if(o.status==="مرفوض") rejected++;
+else pending++;
+
+if(search && !o.name?.toLowerCase().includes(search) && !o.phone?.includes(search)) return;
+if(status && o.status!==status) return;
+
+let date="-";
+if(o.createdAt?.seconds){
+date=new Date(o.createdAt.seconds*1000).toLocaleString("en-US");
+}
+
+let statusClass="pending";
+if(o.status==="تم التنفيذ") statusClass="approved";
+if(o.status==="مرفوض") statusClass="rejected";
+
+table.innerHTML+=`
+<tr>
+<td>${o.name||"-"}</td>
+<td>${o.phone||"-"} <button class="btn gray" onclick="navigator.clipboard.writeText('${o.phone}')">نسخ</button></td>
+<td>${o.category||"-"}</td>
+<td>${o.price||"-"} ريال</td>
+<td>${date}</td>
+<td><span class="status ${statusClass}">${o.status||"قيد الانتظار"}</span></td>
+<td>
+<button class="btn details" onclick='createInvoice(${JSON.stringify(o)})'>فاتورة</button>
+<button class="btn green" onclick="updateStatus('${o.id}','تم التنفيذ')">✔</button>
+<button class="btn red" onclick="updateStatus('${o.id}','مرفوض')">✖</button>
+<button class="btn gray" onclick="deleteOrder('${o.id}')">🗑</button>
+<button class="btn whatsapp" onclick="sendWhatsApp('${o.phone}','${o.name}','${o.status}','${o.price}')">واتساب</button>
+</td>
+</tr>`;
+});
+
+document.getElementById("total").innerText=total;
+document.getElementById("pending").innerText=pending;
+document.getElementById("approved").innerText=approved;
+document.getElementById("rejected").innerText=rejected;
+}
+
+window.updateStatus=async(id,status)=>{await updateDoc(doc(db,"orders",id),{status})}
+
+window.deleteOrder=async(id)=>{
+if(confirm("هل أنت متأكد من حذف الطلب؟")){
+await deleteDoc(doc(db,"orders",id));
+}
+}
+
+async function getNextInvoiceNumber(){
+const counterRef=doc(db,"settings","invoiceCounter");
+return await runTransaction(db,async(transaction)=>{
+const counterDoc=await transaction.get(counterRef);
+let newNumber=1;
+if(counterDoc.exists()){
+newNumber=counterDoc.data().current+1;
+}
+transaction.set(counterRef,{current:newNumber});
+return newNumber;
+});
+}
+
+window.createInvoice=async(o)=>{
+const invoiceNumber=await getNextInvoiceNumber();
+const {jsPDF}=window.jspdf;
+const docPDF=new jsPDF();
+
+let totalAmount=(o.pages&&o.price)?o.pages*o.price:o.price;
+
+docPDF.addImage("https://i.postimg.cc/mRmHdr1j/file-00000000d5d871f79cf9218e3141d570.png","PNG",70,10,70,30);
+
+docPDF.text("Invoice #"+invoiceNumber,20,60);
+docPDF.text("الاسم: "+o.name,20,70);
+docPDF.text("الفئة: "+o.category,20,80);
+docPDF.text("عدد الصفحات: "+(o.pages||"-"),20,90);
+docPDF.text("المبلغ: "+totalAmount+" ريال",20,100);
+
+docPDF.save("Invoice_"+invoiceNumber+".pdf");
+
+let msg=`مرحبا ${o.name}%0Aرقم الفاتورة: ${invoiceNumber}%0Aالمبلغ: ${totalAmount} ريال`;
+window.open(`https://wa.me/967${o.phone}?text=${msg}`,"_blank");
+}
+
+window.sendWhatsApp=(phone,name,status,price)=>{
+let msg=`مرحبا ${name}%0Aحالة طلبك: ${status}%0Aالمبلغ: ${price} ريال`;
+window.open(`https://wa.me/967${phone}?text=${msg}`,"_blank");
+}
+
+searchInput.oninput=renderTable;
+statusFilter.onchange=renderTable;
+
+</script>
+</body>
+</html>
