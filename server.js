@@ -5,35 +5,28 @@ const path = require("path");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// السماح بالاتصال من أي موقع (Netlify مثلاً)
+// middlewares
 app.use(cors());
-
-// قراءة JSON من الطلبات
 app.use(express.json());
 
-// عرض ملفات HTML و CSS و JS
-app.use(express.static(path.join(__dirname)));
+// 👇 هذا مهم جداً
+app.use(express.static(__dirname));
 
 // الصفحة الرئيسية
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// استقبال الطلبات
+// API الطلبات
 app.post("/api/orders", (req, res) => {
-  const order = req.body;
-
-  console.log("📦 طلب جديد:", order);
-
-  // هنا مستقبلاً نربط قاعدة البيانات
+  console.log("طلب جديد:", req.body);
 
   res.json({
     success: true,
-    message: "تم استلام الطلب بنجاح ✅"
+    message: "تم استلام الطلب"
   });
 });
 
-// تشغيل السيرفر
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
