@@ -1,34 +1,39 @@
-require("dotenv").config();
 const express = require("express");
-const axios = require("axios");
 const cors = require("cors");
+const path = require("path");
 
 const app = express();
+const PORT = process.env.PORT || 3000;
+
+// السماح بالاتصال من أي موقع (Netlify مثلاً)
 app.use(cors());
+
+// قراءة JSON من الطلبات
 app.use(express.json());
 
-app.post("/send-whatsapp", async (req, res) => {
-  try {
-    const { phone, message } = req.body;
+// عرض ملفات HTML و CSS و JS
+app.use(express.static(path.join(__dirname)));
 
-    const response = await axios.post(
-      `https://api.ultramsg.com/${process.env.INSTANCE_ID}/messages/chat`,
-      {
-        token: process.env.TOKEN,
-        to: phone,
-        body: message,
-      }
-    );
-
-    res.json({ success: true, data: response.data });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
+// الصفحة الرئيسية
 app.get("/", (req, res) => {
-  res.send("Lahazat Server Running 🚀");
+  res.sendFile(path.join(__dirname, "index.html"));
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log("Server started on port " + PORT));
+// استقبال الطلبات
+app.post("/api/orders", (req, res) => {
+  const order = req.body;
+
+  console.log("📦 طلب جديد:", order);
+
+  // هنا مستقبلاً نربط قاعدة البيانات
+
+  res.json({
+    success: true,
+    message: "تم استلام الطلب بنجاح ✅"
+  });
+});
+
+// تشغيل السيرفر
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});
